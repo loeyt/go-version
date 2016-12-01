@@ -41,7 +41,7 @@ func main() {
 	var str struct {
 		Addr, Len uint64
 	}
-	err = binary.Read(r, binary.LittleEndian, &str)
+	err = binary.Read(r, f.ByteOrder, &str)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
