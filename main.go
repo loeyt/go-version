@@ -8,6 +8,14 @@ import (
 	"os"
 )
 
+type str32 struct {
+	Addr, Len uint32
+}
+
+type str64 struct {
+	Addr, Len uint64
+}
+
 func main() {
 	if len(os.Args) != 2 {
 		fmt.Fprintln(os.Stderr, "usage: "+os.Args[0]+" path/to/executable")
@@ -33,25 +41,42 @@ func main() {
 		fmt.Fprintln(os.Stdout, "runtime.buildVersion not found, not a Go binary?")
 		os.Exit(2)
 	}
+	var str interface{}
+	switch f.Class {
+	case elf.ELFCLASS32:
+		str = &str32{}
+	case elf.ELFCLASS64:
+		str = &str64{}
+	default:
+		fmt.Fprintf(os.Stderr, "unknown elf class: %d\n", f.Class)
+		os.Exit(2)
+	}
 	r, err := open(f, symbol.Value)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	var str struct {
-		Addr, Len uint64
-	}
-	err = binary.Read(r, f.ByteOrder, &str)
+	err = binary.Read(r, f.ByteOrder, str)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	r, err = open(f, str.Addr)
+	var (
+		straddr uint64
+		strlen  uint64
+	)
+	switch f.Class {
+	case elf.ELFCLASS32:
+		straddr, strlen = uint64(str.(*str32).Addr), uint64(str.(*str32).Len)
+	case elf.ELFCLASS64:
+		straddr, strlen = str.(*str64).Addr, str.(*str64).Len
+	}
+	r, err = open(f, straddr)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
-	data := make([]byte, str.Len)
+	data := make([]byte, strlen)
 	_, err = io.ReadFull(r, data)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
