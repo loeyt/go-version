@@ -33,8 +33,17 @@ func main() {
 		os.Exit(1)
 	}
 	version, err = elfDetect(f)
-	if err != nil {
+	if err == nil {
+		goto done
+	}
+	if !strings.Contains(err.Error(), "bad magic number") {
 		fmt.Fprintln(os.Stderr, "unable to detect from elf:", err.Error())
+		os.Exit(1)
+	}
+	version, err = peDetect(f)
+	if err != nil {
+		// TODO: catch "bad magic number" error like above
+		fmt.Fprintln(os.Stderr, "unable to detect from pe:", err.Error())
 		os.Exit(1)
 	}
 done:
