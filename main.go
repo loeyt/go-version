@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 )
 
 type str32 struct {
@@ -23,10 +24,19 @@ func main() {
 		fmt.Fprintln(os.Stderr, "could not open file:", err.Error())
 		os.Exit(1)
 	}
-	version, err := elfDetect(f)
+	version, err := machoDetect(f)
+	if err == nil {
+		goto done
+	}
+	if !strings.Contains(err.Error(), "invalid magic number") {
+		fmt.Fprintln(os.Stderr, "unable to detect from macho:", err.Error())
+		os.Exit(1)
+	}
+	version, err = elfDetect(f)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "unable to detect from elf:", err.Error())
 		os.Exit(1)
 	}
+done:
 	fmt.Println(version)
 }
