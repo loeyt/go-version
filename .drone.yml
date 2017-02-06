@@ -1,0 +1,49 @@
+matrix:
+  GO_VERSION:
+    - 1.8
+    - 1.7
+
+pipeline:
+  setup:
+    image: golang:${GO_VERSION}
+    commands:
+      - make setup CI=1
+  test:
+    image: golang:${GO_VERSION}
+    commands:
+      - make test CI=1
+  build:
+    image: golang:${GO_VERSION}
+    commands:
+      - make all CI=1 # GOOS=linux GOARCH=amd64
+  build-all-dists:
+    image: golang:${GO_VERSION}
+    commands:
+      - make all CI=1 GOOS=linux GOARCH=386
+      - make all CI=1 GOOS=linux GOARCH=arm
+      - make all CI=1 GOOS=linux GOARCH=ppc64le
+      - make all CI=1 GOOS=linux GOARCH=s390x
+      - make all CI=1 GOOS=darwin GOARCH=amd64
+      - make all CI=1 GOOS=darwin GOARCH=386
+      - make all CI=1 GOOS=windows GOARCH=amd64
+      - make all CI=1 GOOS=windows GOARCH=386
+    environment:
+      GO_VERSION: 1.8
+    when:
+      event: tag
+  prepare-release:
+    image: golang:${GO_VERSION}
+    commands:
+      - make prepare-release CI=1
+    environment:
+      GO_VERSION: 1.8
+    when:
+      event: tag
+  release:
+    image: plugins/github-release
+    files: dist/*
+    draft: true
+    environment:
+      GO_VERSION: 1.8
+    when:
+      event: tag
