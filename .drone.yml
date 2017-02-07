@@ -27,23 +27,23 @@ pipeline:
       - make all CI=1 GOOS=darwin GOARCH=386
       - make all CI=1 GOOS=windows GOARCH=amd64
       - make all CI=1 GOOS=windows GOARCH=386
-    environment:
-      GO_VERSION: 1.8
     when:
       event: tag
+      matrix:
+        GO_VERSION: 1.8
   prepare-release:
     image: golang:${GO_VERSION}
     commands:
       - make prepare-release CI=1
-    environment:
-      GO_VERSION: 1.8
     when:
       event: tag
+      matrix:
+        GO_VERSION: 1.8
   release:
     image: plugins/github-release
     files: dist/*
     draft: true
-    environment:
-      GO_VERSION: 1.8
     when:
       event: tag
+      matrix:
+        GO_VERSION: 1.8
